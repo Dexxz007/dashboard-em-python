@@ -1,0 +1,1709 @@
+---
+title: "Brazilian_E_Commerce"
+author: "AhmetG"
+date: "2024-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Analysis in R Markdown - R Markdown'da Analiz
+
+## Step-by-Step Process - Adım Adım Süreç
+
+### 1. **Loading Datasets - Veri Setlerini Yükleme**
+First, we will load all the datasets into the R environment.  
+İlk olarak, tüm veri setlerini R ortamına yükleyeceğiz.
+
+```{r}
+# Loading necessary libraries - Gerekli kütüphaneleri yüklüyoruz
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+# Reading the datasets - Veri setlerini okuyoruz
+order_payments <- read.csv("olist_order_payments_dataset.csv")
+orders <- read.csv("olist_orders_dataset.csv")
+products <- read.csv("olist_products_dataset.csv")
+product_categories <- read.csv("product_category_name_translation.csv")
+customers <- read.csv("olist_customers_dataset.csv")
+geolocation <- read.csv("olist_geolocation_dataset.csv")
+order_items <- read.csv("olist_order_items_dataset.csv")
+order_reviews <- read.csv("olist_order_reviews_dataset.csv")
+sellers <- read.csv("olist_sellers_dataset.csv")
+
+```
+
+
+```{r}
+# Displaying first few rows of each dataset - Her veri setinin ilk birkaç satırını gösteriyoruz
+head(order_payments)
+head(orders)
+head(products)
+head(product_categories)
+head(customers)
+head(geolocation)
+head(order_items)
+head(order_reviews)
+head(sellers)
+```
+### 2. Exploratory Data Analysis (EDA) - Keşifsel Veri Analizi (EDA)
+Next, let's explore the structure and summary of the datasets to understand them better.
+Sonraki adımda, veri setlerinin yapısını ve özetini inceleyelim.
+
+```{r}
+# Checking the structure of the 'orders' dataset - 'orders' veri setinin yapısını kontrol ediyoruz
+str(orders)
+
+# Summary statistics of 'orders' - 'orders' veri seti için özet istatistikler
+summary(orders)
+
+```
+
+
+
+### 3. Checking for Missing Values - Eksik Değerlerin Kontrolü
+Now, we will check for any missing values in the datasets.
+Şimdi veri setlerindeki eksik değerleri kontrol edeceğiz.
+
+```{r}
+## Checking for missing values in all datasets
+
+# Checking for missing values in the 'order_payments' dataset
+sapply(order_payments, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'orders' dataset
+sapply(orders, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'products' dataset
+sapply(products, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'product_categories' dataset
+sapply(product_categories, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'customers' dataset
+sapply(customers, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'geolocation' dataset
+sapply(geolocation, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'order_items' dataset
+sapply(order_items, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'order_reviews' dataset
+sapply(order_reviews, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'sellers' dataset
+sapply(sellers, function(x) sum(is.na(x)))
+
+
+```
+
+#### Eksik Değerlerin Özeti - Summary of Missing Values
+
+- orders veri setinde eksik veri yok.
+There are no missing values in the orders dataset.
+- order_payments veri setinde eksik veri yok.
+There are no missing values in the order_payments dataset.
+- product_categories veri setinde eksik veri yok.
+There are no missing values in the product_categories dataset.
+- customers veri setinde eksik veri yok.
+There are no missing values in the customers dataset.
+- geolocation veri setinde eksik veri yok.
+There are no missing values in the geolocation dataset.
+- order_items veri setinde eksik veri yok.
+There are no missing values in the order_items dataset.
+- order_reviews veri setinde eksik veri yok.
+There are no missing values in the order_reviews dataset.
+- sellers veri setinde eksik veri yok.
+There are no missing values in the sellers dataset.
+
+#### Eksik Değerler Bulunan Sütunlar (products veri seti):
+
+- product_name_lenght: 610 eksik
+610 missing values in product_name_lenght
+- product_description_lenght: 610 eksik
+610 missing values in product_description_lenght
+- product_photos_qty: 610 eksik
+610 missing values in product_photos_qty
+- product_weight_g: 2 eksik
+2 missing values in product_weight_g
+- product_length_cm: 2 eksik
+2 missing values in product_length_cm
+- product_height_cm: 2 eksik
+2 missing values in product_height_cm
+- product_width_cm: 2 eksik
+2 missing values in product_width_cm
+
+#### Ne Yapabiliriz? - What Can We Do?
+Şu anda sadece **products** veri setinde eksik veriler var.
+Currently, there are missing values only in the **"products"** dataset.
+Bu verileri aşağıdaki şekilde doldurabiliriz:
+We can handle these missing values like that :
+
+product_weight_g, product_length_cm, product_height_cm, product_width_cm sütunlarındaki eksik değerleri **ortalama** ile doldurabiliriz.
+We can fill the missing values in product_weight_g, product_length_cm, product_height_cm, and product_width_cm with the mean.
+
+product_name_lenght, product_description_lenght, product_photos_qty sütunlarındaki eksik satırları **silebiliriz.**
+We can remove the rows with missing values in product_name_lenght, product_description_lenght, and product_photos_qty.
+
+
+```{r}
+# Filling missing values with the mean for numeric columns in 'products'
+# Sayısal sütunlar için eksik değerleri ortalama ile dolduruyoruz
+products$product_weight_g[is.na(products$product_weight_g)] <- mean(products$product_weight_g, na.rm = TRUE)
+products$product_length_cm[is.na(products$product_length_cm)] <- mean(products$product_length_cm, na.rm = TRUE)
+products$product_height_cm[is.na(products$product_height_cm)] <- mean(products$product_height_cm, na.rm = TRUE)
+products$product_width_cm[is.na(products$product_width_cm)] <- mean(products$product_width_cm, na.rm = TRUE)
+
+# Dropping rows with missing values for 'product_name_lenght', 'product_description_lenght', and 'product_photos_qty'
+# 'product_name_lenght', 'product_description_lenght', ve 'product_photos_qty' sütunlarındaki eksik satırları siliyoruz
+products <- products[!is.na(products$product_name_lenght), ]
+products <- products[!is.na(products$product_description_lenght), ]
+products <- products[!is.na(products$product_photos_qty), ]
+
+```
+
+#### Tekrar kontrol edelim eksik değer varmı. Check again for missing values
+
+```{r}
+# Rechecking for missing values in all datasets after cleaning
+
+# Checking for missing values in the 'order_payments' dataset
+sapply(order_payments, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'orders' dataset
+sapply(orders, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'products' dataset
+sapply(products, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'product_categories' dataset
+sapply(product_categories, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'customers' dataset
+sapply(customers, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'geolocation' dataset
+sapply(geolocation, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'order_items' dataset
+sapply(order_items, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'order_reviews' dataset
+sapply(order_reviews, function(x) sum(is.na(x)))
+
+# Checking for missing values in the 'sellers' dataset
+sapply(sellers, function(x) sum(is.na(x)))
+
+```
+
+#### Analizimize Başlamak İçin Temel Adımlar - Fundamental Steps to Start Our Analysis
+
+#### 1. Keşifsel Veri Analizi (EDA) - Exploratory Data Analysis (EDA)
+Veri Dağılımı ve İstatistikler - Data Distribution and Statistics: Veri setinin yapısını ve genel istatistiklerini inceleyelim.
+
+Let's examine the structure and summary statistics of the datasets.
+
+```{r}
+# Structure and summary statistics of the orders dataset
+# 'orders' veri setinin yapısı ve özet istatistikleri
+str(orders)
+summary(orders)
+
+# Structure and summary statistics of the products dataset
+# 'products' veri setinin yapısı ve özet istatistikleri
+str(products)
+summary(products)
+
+```
+
+
+#### Ödeme Türlerinin Dağılımı - Payment Method Distribution: 
+
+Ödeme yöntemlerine göre sipariş dağılımını görselleştirelim.
+Let’s visualize the distribution of orders by payment method.
+
+```{r}
+# Payment method distribution
+# Ödeme yöntemi dağılımı
+payment_method_counts <- table(order_payments$payment_type)
+barplot(payment_method_counts, main='Payment Method Distribution', xlab='Payment Type', ylab='Number of Orders')
+
+```
+
+#### Siparişlerin Zaman İçinde Dağılımı - Order Trend Over Time: 
+
+Siparişlerin aylara göre nasıl değiştiğini inceleyelim.
+Let’s examine how orders change by month.
+
+```{r}
+# Convert 'order_purchase_timestamp' to Date format
+# 'order_purchase_timestamp' tarih formatına çeviriyoruz
+orders$order_purchase_timestamp <- as.Date(orders$order_purchase_timestamp)
+
+# Group orders by month and count them
+# Siparişleri ay bazında gruplayıp sayıyoruz
+monthly_orders <- table(format(orders$order_purchase_timestamp, "%Y-%m"))
+
+# Plotting the monthly order trend
+# Aylık sipariş trendini çiziyoruz
+plot(monthly_orders, type='o', main='Monthly Order Trend', xlab='Month', ylab='Number of Orders')
+
+```
+
+#### 2. A/B Testi Senaryosu - A/B Testing Scenario
+
+A/B testini uygulamak için hangi iki grup arasında karşılaştırma yapacağımıza karar verelim.
+Let’s decide which two groups we will compare for the A/B test.
+
+Örneğin, ödeme yöntemleri arasında bir karşılaştırma yapabiliriz.
+For example, we can compare payment methods. Hangi ödeme yönteminin daha fazla sipariş getirdiğini 
+
+incelemek için aşağıdaki kodları kullanabiliriz:
+We can use the following code to examine which payment method brings in more orders.
+
+
+```{r}
+# Average payment value by payment type
+# Ödeme türüne göre ortalama ödeme değerini hesaplıyoruz
+average_payment_value <- aggregate(payment_value ~ payment_type, data=order_payments, FUN=mean)
+
+# Barplot for average payment value
+# Ortalama ödeme değerini gösteren çubuk grafiği
+barplot(average_payment_value$payment_value, names.arg=average_payment_value$payment_type, main='Average Payment Value by Payment Type', xlab='Payment Type', ylab='Average Payment Value')
+
+```
+
+
+#### Devam Edelim! - Let’s Proceed!
+
+Bu adımları uygulayarak analizimize başlayabiliriz.
+We can start our analysis by applying these steps.
+
+### 1. Veri Dağılımı ve İstatistikler - Data Distribution and Statistics
+
+#### A) Orders Veri Setinin Yapısı ve Özet İstatistikleri - Structure and Summary Statistics of Orders Dataset
+
+```{r}
+# Structure and summary statistics of the orders dataset
+# 'orders' veri setinin yapısı ve özet istatistikleri
+str(orders)
+summary(orders)
+
+```
+
+#### B) Products Veri Setinin Yapısı ve Özet İstatistikleri - Structure and Summary Statistics of Products Dataset
+
+```{r}
+# Structure and summary statistics of the products dataset
+# 'products' veri setinin yapısı ve özet istatistikleri
+str(products)
+summary(products)
+
+```
+
+### 2. Ödeme Türlerinin Dağılımı - Payment Method Distribution
+
+Ödeme türlerini inceleyip görselleştirmek için aşağıdaki kodu kullanabilirsiniz:
+You can use the following code to examine and visualize the distribution of payment types.
+
+```{r}
+# Payment method distribution
+# Ödeme yöntemi dağılımı
+payment_method_counts <- table(order_payments$payment_type)
+barplot(payment_method_counts, main='Payment Method Distribution', xlab='Payment Type', ylab='Number of Orders')
+
+```
+
+
+### 3. Siparişlerin Zaman İçinde Dağılımı - Order Trend Over Time
+
+Siparişlerin aylara göre nasıl değiştiğini incelemek için aşağıdaki kodu kullanabilirsiniz:
+You can use the following code to examine how orders vary by month.
+
+```{r}
+# Convert 'order_purchase_timestamp' to Date format
+# 'order_purchase_timestamp' tarih formatına çeviriyoruz
+orders$order_purchase_timestamp <- as.Date(orders$order_purchase_timestamp)
+
+# Group orders by month and count them
+# Siparişleri ay bazında gruplayıp sayıyoruz
+monthly_orders <- table(format(orders$order_purchase_timestamp, "%Y-%m"))
+
+# Plotting the monthly order trend
+# Aylık sipariş trendini çiziyoruz
+plot(monthly_orders, type='o', main='Monthly Order Trend', xlab='Month', ylab='Number of Orders')
+
+```
+
+### 4. Analiz Sonuçları - Analysis Results
+
+#### A) Ödeme Türlerinin Dağılımı - Distribution of Payment Methods
+
+Ödeme türlerinin dağılımını inceledikten sonra hangi ödeme yönteminin daha fazla tercih edildiğini gözlemleyelim.
+After examining the distribution of payment methods, let’s observe which payment method was preferred the most.
+
+#### B) Siparişlerin Zaman İçindeki Değişimi - Change in Orders Over Time
+
+Siparişlerin zaman içindeki değişimini inceledikten sonra hangi aylarda daha fazla sipariş alındığını analiz edelim.
+After analyzing the change in orders over time, let’s analyze which months had the highest number of orders.
+
+### 5. A/B Testi Senaryosu - A/B Testing Scenario
+
+#### A) Ödeme Yöntemlerinin Karşılaştırılması - Comparison of Payment Methods
+
+Şimdi A/B testini uygulamak için ödeme yöntemleri arasındaki farkları inceleyelim. Hangi ödeme yönteminin daha fazla ortalama değer getirdiğini belirlemek için aşağıdaki kodları kullanabiliriz:
+Now, let’s perform the A/B test by examining the differences between payment methods. We can use the following code to determine which payment method has a higher average value.
+
+
+```{r}
+# Average payment value by payment type
+# Ödeme türüne göre ortalama ödeme değerini hesaplıyoruz
+average_payment_value <- aggregate(payment_value ~ payment_type, data=order_payments, FUN=mean)
+
+# Barplot for average payment value
+# Ortalama ödeme değerini gösteren çubuk grafiği
+barplot(average_payment_value$payment_value, names.arg=average_payment_value$payment_type, main='Average Payment Value by Payment Type', xlab='Payment Type', ylab='Average Payment Value')
+
+```
+
+### A/B Testi İstatistiksel Anlamlılık - A/B Test Statistical Significance
+
+Ortalama ödeme değerleri arasındaki farkın istatistiksel olarak anlamlı olup olmadığını test etmek için bir t-test yapabiliriz.
+We can perform a t-test to check if the difference in average payment values is statistically significant.
+
+```{r}
+# Subsetting the payment data for two payment types
+# İki ödeme yöntemi için ödeme verilerini alt kümelere ayırıyoruz
+payment_type_1 <- subset(order_payments, payment_type == "credit_card")$payment_value
+payment_type_2 <- subset(order_payments, payment_type == "boleto")$payment_value
+
+# Performing the t-test
+# T-test uyguluyoruz
+t_test_result <- t.test(payment_type_1, payment_type_2)
+
+# Displaying the t-test result
+# T-test sonucunu görüntülüyoruz
+print(t_test_result)
+
+```
+
+### T-Test Sonuçlarını İnceleme - Reviewing T-Test Results
+
+#### Sonuçların Yorumu - Interpretation of Results:
+
+#### t-değeri (t-value): **10.649**
+Bu, iki grup arasındaki farkın büyüklüğünü ölçen bir değerdir. Ne kadar büyükse, fark o kadar anlamlıdır.
+The t-value of 10.649 indicates the magnitude of the difference between the two groups. The larger the value, the more significant the difference.
+
+#### p-değeri (p-value): **2.2e-16**’den küçük
+Bu, istatistiksel anlamlılığı belirleyen önemli bir değerdir. Eğer p-değeri 0.05'ten küçükse, farkın şans eseri oluşmadığı ve istatistiksel olarak anlamlı olduğu kabul edilir. Burada p-değeri 0.05'ten çok daha küçük, yani fark istatistiksel olarak anlamlı.
+The p-value is less than 2.2e-16, which is well below 0.05. This means the difference between the two payment methods is statistically significant.
+
+#### Güven Aralığı (Confidence Interval): **14.92 ile 21.65**
+Bu aralık, iki grup arasındaki farkın **%95** güvenle bu değerler arasında olduğunu gösterir.
+The confidence interval between 14.92 and 21.65 indicates that we can be 95% confident that the true difference between the means lies within this range.
+
+#### Ortalama Değerler (Mean Estimates):
+credit_card (x): 163.32
+boleto (y): 145.03
+credit_card ile yapılan ödemelerin ortalama değeri boleto ile yapılan ödemelerden daha yüksek.
+The mean for credit_card payments is 163.32, which is higher than the mean for boleto payments (145.03).
+
+#### Sonuç - Conclusion
+Bu t-test sonuçlarına göre, **credit_card ve boleto ödeme yöntemleri arasındaki ortalama ödeme değerleri arasında istatistiksel olarak anlamlı bir fark var.** credit_card ile yapılan ödemeler ortalama olarak daha yüksek.
+
+The results of this t-test show that there is a statistically significant difference between the average payment values for credit_card and boleto. Payments made via credit_card are on average higher.
+
+##### **(Yukarıda açıkladığımız sonuca göre, farklı ödeme yöntemleri üzerine yapacağınız kampanyalar veya analizler için stratejiler geliştirebiliriz.Based on the results we explained above, we can develop strategies for your campaigns or analyses on different payment methods.)**
+
+
+### Sonuçlara Dayalı Stratejiler - Strategies Based on Results
+#### A) Ödeme Yöntemlerine Göre Farklı Stratejiler - Different Strategies Based on Payment Methods
+
+Test sonuçlarına göre, credit_card ödeme yöntemi ortalama olarak boleto yönteminden daha yüksek bir ödeme değeri getiriyor. Bu fark üzerine şu stratejileri düşünebiliriz:
+
+- Credit Card Kampanyaları - Credit Card Campaigns:
+- Müşterileri credit_card ödeme yöntemine teşvik edecek kampanyalar düzenlenebilir.
+Campaigns can be created to encourage customers to use credit_card as a payment method.
+- Örneğin, kredi kartı ile yapılan ödemelerde indirim veya taksit seçenekleri sunulabilir.
+For example, discounts or installment options could be offered for payments made via credit card.
+- Boleto Ödeme Yöntemi İçin Teşvikler - Incentives for Boleto Payments:
+- Boleto ödeme yöntemini tercih eden müşterilere özel teşvikler sunulabilir.
+Special incentives could be offered to customers who choose the boleto payment method.
+-Örneğin, boleto ile yapılan ödemeler için ek indirim veya bonus puanlar verilebilir.
+For example, extra discounts or bonus points could be offered for payments made via boleto.
+
+#### B) Güven Aralığı ve Anlamlılık Üzerinden Yorumlama - Interpretation Based on Confidence Interval and Significance
+
+Güven aralığı ve p-değeri sonuçlarına göre, ödeme yöntemleri arasında anlamlı bir fark var. Bu durum şu şekilde değerlendirilebilir:
+
+- Kredi kartı ile yapılan ödemelerin getirdiği gelir daha yüksek olduğundan, bu yöntemi teşvik eden pazarlama stratejileri geliştirilebilir.
+Since credit card payments generate higher revenue, marketing strategies that encourage this payment method can be developed.
+
+### Analizin Diğer Boyutları - Further Dimensions of Analysis
+Bu noktada, analizimizi farklı boyutlara taşıyabiliriz. İşte birkaç öneri:
+
+- **Zaman Serisi Analizi - Time Series Analysis:** Siparişlerin zaman içinde nasıl değiştiğini incelemek için zaman serisi analizi yapabiliriz.
+We can perform a time series analysis to examine how orders change over time.
+- **Müşteri Segmentasyonu - Customer Segmentation:** Müşterileri demografik özelliklerine veya ödeme alışkanlıklarına göre segmentlere ayırabiliriz.
+We can segment customers based on demographics or payment habits.
+
+
+#### Şimdi zaman serisi analizine geçelim. Zaman serisi analizi, siparişlerin veya ödemelerin zaman içindeki değişimlerini incelemek için mükemmel bir yöntemdir.
+Now let's move on to time series analysis. Time series analysis is an excellent method for examining changes in orders or payments over time.
+
+### Zaman Serisi Analizine Başlama - Starting Time Series Analysis
+
+Zaman serisi analizinde ilk adım, tarih sütunlarını kullanarak verileri zaman dilimlerine (gün, ay, yıl) göre gruplamak ve bu değişiklikleri incelemektir.
+The first step in time series analysis is to group the data by time periods (day, month, year) using date columns and examine these changes.
+
+#### A) Siparişlerin Aylık Dağılımı - Monthly Distribution of Orders
+
+Bu adımda siparişlerin zaman içindeki değişimini inceleyerek aylık sipariş sayısını analiz edeceğiz.
+In this step, we will analyze the number of monthly orders by examining the change in orders over time.
+
+
+#### - Tarih Formatının Kontrolü - Checking Date Format
+
+Öncelikle, tarih formatında bir hata olup olmadığını kontrol edelim. Bazı tarih değerleri boş olabilir ya da hatalı formatlanmış olabilir. Bu nedenle tarih sütununda NA veya eksik değerleri kontrol edelim:
+First, let's check if there is an error in the date format. Some date values may be empty or formatted incorrectly. So let's check for NA or missing values in the date column:
+
+```{r}
+# Check for missing or NA values in 'order_purchase_timestamp'
+# 'order_purchase_timestamp' sütununda eksik veya NA değerlerini kontrol ediyoruz
+sum(is.na(orders$order_purchase_timestamp))
+
+```
+
+#### - Tarih Formatına Çevirme - Converting to Date Format
+
+Tarih sütununu doğru formatta olduğundan emin olmak için yeniden tarih formatına çevirelim:
+Let's convert the date column back to date format to make sure it's in the correct format:
+
+```{r}
+# Ensure the 'order_purchase_timestamp' column is in Date format
+# 'order_purchase_timestamp' sütununu doğru tarih formatına çeviriyoruz
+orders$order_purchase_timestamp <- as.Date(orders$order_purchase_timestamp, format="%Y-%m-%d")
+
+```
+
+
+
+```{r}
+# Checking the structure and summary of the 'order_purchase_timestamp' column
+# 'order_purchase_timestamp' sütununun yapısını ve özetini kontrol edelim
+str(orders$order_purchase_timestamp)
+summary(orders$order_purchase_timestamp)
+
+```
+
+
+```{r}
+# Removing rows with NA or empty 'order_purchase_timestamp' values
+# 'order_purchase_timestamp' sütunundaki NA veya boş değerleri temizliyoruz
+orders <- orders[!is.na(orders$order_purchase_timestamp) & orders$order_purchase_timestamp != "", ]
+
+```
+
+
+
+```{r}
+# Check the unique values in the 'order_purchase_timestamp' column
+# 'order_purchase_timestamp' sütunundaki benzersiz değerleri kontrol edelim
+unique(orders$order_purchase_timestamp)
+
+```
+
+
+```{r}
+# Remove rows with NA or empty 'order_purchase_timestamp' values
+# NA veya boş 'order_purchase_timestamp' değerlerine sahip satırları kaldırıyoruz
+orders <- orders[!is.na(orders$order_purchase_timestamp) & orders$order_purchase_timestamp != "", ]
+
+```
+
+
+```{r}
+# Kontrol etmek için birkaç satırı görüntüleyelim
+head(orders$order_purchase_timestamp)
+
+```
+
+
+
+
+```{r}
+# Checking for NA values or any unexpected formats in the timestamp column
+# Zaman damgası sütununda NA değerleri veya beklenmeyen formatları kontrol ediyoruz
+orders_with_na <- orders[is.na(orders$order_purchase_timestamp), ]
+head(orders_with_na)
+
+```
+
+```{r}
+# Checking the number of rows left in the 'orders' dataset
+# 'orders' veri setinde kalan satır sayısını kontrol ediyoruz
+nrow(orders)
+
+```
+
+#### veriyi silmişiz yeniden yükleyeceğiz
+
+```{r}
+# Reload the 'orders' dataset
+# 'orders' veri setini yeniden yüklüyoruz
+orders <- read.csv("olist_orders_dataset.csv")
+
+# Display the first few rows to ensure it's loaded correctly
+# Veri setinin doğru yüklendiğinden emin olmak için ilk birkaç satırı görüntüleyin
+head(orders)
+
+```
+
+```{r}
+# Convert 'order_purchase_timestamp' to Date format
+# 'order_purchase_timestamp' tarih formatına çeviriyoruz
+orders$order_purchase_timestamp <- as.Date(orders$order_purchase_timestamp, format="%Y-%m-%d %H:%M:%S")
+
+# Convert other date columns to Date format as well
+# Diğer tarih sütunlarını da tarih formatına çeviriyoruz
+orders$order_delivered_customer_date <- as.Date(orders$order_delivered_customer_date, format="%Y-%m-%d %H:%M:%S")
+orders$order_estimated_delivery_date <- as.Date(orders$order_estimated_delivery_date, format="%Y-%m-%d %H:%M:%S")
+
+# Check for missing values in date columns
+# Tarih sütunlarında eksik değer olup olmadığını kontrol ediyoruz
+sum(is.na(orders$order_purchase_timestamp))
+sum(is.na(orders$order_delivered_customer_date))
+sum(is.na(orders$order_estimated_delivery_date))
+
+```
+
+```{r}
+# Removing rows with missing 'order_delivered_customer_date' values
+# Eksik 'order_delivered_customer_date' değerlerine sahip satırları kaldırıyoruz
+orders <- orders[!is.na(orders$order_delivered_customer_date), ]
+
+```
+
+
+
+```{r}
+# Removing rows with missing 'order_delivered_customer_date' values
+# Eksik 'order_delivered_customer_date' değerlerine sahip satırları kaldırıyoruz
+orders <- orders[!is.na(orders$order_delivered_customer_date), ]
+
+# Kaldıktan sonra veri setinin durumunu kontrol et
+# Veri setinin durumunu kontrol edelim
+nrow(orders)  # Kalan satır sayısını kontrol ediyoruz
+sum(is.na(orders$order_delivered_customer_date))  # Eksik değer kontrolü
+
+```
+
+
+```{r}
+# Grouping orders by month and counting them
+# Siparişleri ay bazında gruplayıp sayıyoruz
+monthly_orders <- aggregate(order_id ~ format(order_purchase_timestamp, "%Y-%m"), data=orders, FUN=length)
+
+# Rename columns for clarity
+# Kolonları daha anlaşılır hale getiriyoruz
+colnames(monthly_orders) <- c("Month", "Number_of_Orders")
+
+# Plotting the monthly order trend
+# Aylık sipariş trendini çiziyoruz
+plot(as.Date(paste0(monthly_orders$Month, "-01")), monthly_orders$Number_of_Orders, type='o', main='Monthly Order Trend', xlab='Month', ylab='Number of Orders', las=2)
+
+```
+
+```{r}
+# Displaying the monthly orders in a table format
+# Aylık siparişleri tablo formatında görüntülüyoruz
+print(monthly_orders)
+
+```
+
+#### Alternatif Olarak Daha Anlaşılır Bir Tablo - Alternatively Displaying as a Data Frame
+
+Eğer daha güzel bir tablo görünümü isterseniz, kable fonksiyonunu kullanarak tabloyu formatlayabilirsiniz. Bunun için **knitr** paketini kullanabilirsiniz:
+If you want a more beautiful table view, you can format the table using the kable function. For this, you can use the **knitr** package:
+
+```{r}
+# Load the knitr package for better table formatting
+# Daha iyi tablo formatlaması için knitr paketini yüklüyoruz
+library(knitr)
+
+# Displaying the monthly orders using kable for better formatting
+# Kable kullanarak aylık siparişleri daha iyi formatlayarak görüntülüyoruz
+kable(monthly_orders, caption = "Monthly Orders Summary", col.names = c("Month", "Number of Orders"))
+
+```
+
+
+
+#### Zaman Serisi Analizinin Genişletilmesi - Expanding Time Series Analysis
+
+1. Hafta İçi ve Hafta Sonu Alışveriş Tutarları - Comparing Weekday and Weekend Purchases
+
+- Sipariş Tarihini Kullanma: Sipariş tarihinden gün bilgisini alarak siparişlerin hafta içi (Pazartesi-Cuma) veya hafta sonu (Cumartesi-Pazar) olup olmadığını belirleyebiliriz.
+Using Order Date: By taking the day information from the order date, we can determine whether the orders are weekday (Monday-Friday) or weekend (Saturday-Sunday).
+- Sipariş Tutarlarının Karşılaştırılması: Haftanın günlerine göre sipariş tutarlarını karşılaştırabiliriz.
+Comparing Order Amounts: We can compare order amounts according to the days of the week.
+
+#### A) Gün Bilgisi Ekleme - Adding Day Information
+
+Öncelikle, sipariş tarihlerini kullanarak hangi günlerde sipariş verildiğini belirleyelim:
+First, let's determine which days the orders are placed using the order dates:
+
+
+```{r}
+# Add a new column for day of the week
+# Haftanın gününü belirlemek için yeni bir sütun ekliyoruz
+orders$day_of_week <- weekdays(orders$order_purchase_timestamp)
+
+# Check the first few rows to ensure the new column is added
+# Yeni sütunun eklendiğinden emin olmak için ilk birkaç satırı kontrol edelim
+head(orders)
+
+```
+
+#### B) Hafta İçi ve Hafta Sonu Karşılaştırması - Comparing Weekdays and Weekends
+
+```{r}
+# Add a new column for day of the week
+# Haftanın gününü belirlemek için yeni bir sütun ekliyoruz
+orders$day_of_week <- weekdays(orders$order_purchase_timestamp)
+
+# Check the first few rows to ensure the new column is added
+# Yeni sütunun eklendiğinden emin olmak için ilk birkaç satırı kontrol edelim
+head(orders)
+
+```
+
+
+```{r}
+# Create a new column for weekend/weekday
+# Hafta sonu/hafta içi için yeni bir sütun oluşturuyoruz
+orders$week_part <- ifelse(orders$day_of_week %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+
+# Check the first few rows to ensure the new column is added
+# Yeni sütunun eklendiğinden emin olmak için ilk birkaç satırı kontrol edelim
+head(orders)
+
+```
+
+```{r}
+# Join the 'orders' and 'order_payments' datasets to combine information
+# Bilgileri birleştirmek için 'orders' ve 'order_payments' veri setlerini birleştiriyoruz
+combined_data <- merge(orders, order_payments, by = "order_id")
+
+# Grouping orders by week part and summing payment values
+# Hafta içi ve hafta sonu sipariş tutarlarını toplamak için grupluyoruz
+weekly_orders <- aggregate(payment_value ~ week_part, data=combined_data, FUN=sum)
+
+# Displaying the result
+# Sonucu görüntülüyoruz
+print(weekly_orders)
+
+
+```
+
+```{r}
+# Barplot for weekday vs weekend purchases
+# Hafta içi ve hafta sonu alışveriş tutarlarını gösteren çubuk grafiği
+barplot(weekly_orders$payment_value, names.arg=weekly_orders$week_part, main='Weekday vs Weekend Purchases', xlab='Part of Week', ylab='Total Payment Value')
+
+```
+
+
+```{r}
+# Load ggplot2 package
+# ggplot2 paketini yüklüyoruz
+library(ggplot2)
+
+```
+
+
+#### Görsel İyileştirme - Visual enhancement
+
+
+```{r}
+# Create a bar plot for weekday vs weekend purchases using ggplot2
+# Hafta içi ve hafta sonu alışveriş tutarlarını gösteren çubuk grafiği (ggplot2 kullanarak)
+ggplot(weekly_orders, aes(x=week_part, y=payment_value, fill=week_part)) +
+  geom_bar(stat="identity") +
+  labs(title='Weekday vs Weekend Purchases', x='Part of Week', y='Total Payment Value') +
+  scale_y_continuous(labels = scales::comma) +  # Y eksenindeki değerleri daha anlaşılır hale getiriyoruz
+  theme_minimal()
+
+```
+
+
+### Müşteri Segmentasyonu - Customer Segmentation
+Müşteri segmentasyonu yapmak için aşağıdaki adımları izleyebiliriz:
+
+#### A) Müşteri Verilerinin İncelenmesi - Exploring Customer Data
+
+Öncelikle, müşteri veri setini (orders_df, customers_df) inceleyelim ve hangi özellikleri kullanabileceğimizi görelim.
+
+
+```{r}
+# Müşteri veri setinin ilk birkaç satırını görüntüleyelim
+# Viewing the first few rows of the customer dataset
+head(customers)
+
+```
+
+#### B) Demografik Özellikler - Demographic Features
+
+Müşteri verilerini demografik özelliklere göre gruplandırabiliriz. Örneğin, müşteri şehirleri veya eyaletlerine göre segmentler oluşturabiliriz.
+
+- Müşteri Şehirlerine Göre Segmentasyon - Segmenting by Customer Cities
+
+```{r}
+# Grouping customers by city and counting the number of customers
+# Müşterileri şehir bazında gruplandırıp müşteri sayısını hesaplıyoruz
+city_segments <- table(customers$customer_city)
+
+# Creating a data frame for better visualization
+# Daha iyi görselleştirme için bir veri çerçevesi oluşturuyoruz
+city_segments_df <- as.data.frame(city_segments)
+colnames(city_segments_df) <- c("City", "Number_of_Customers")
+
+# Displaying the top cities by number of customers
+# Müşteri sayısına göre en çok müşteriye sahip şehirleri görüntülüyoruz
+top_cities <- head(city_segments_df[order(-city_segments_df$Number_of_Customers), ], 10)
+print(top_cities)
+
+```
+
+```{r}
+# Grouping customers by state and counting the number of customers
+# Müşterileri eyalet bazında gruplandırıp müşteri sayısını hesaplıyoruz
+state_segments <- table(customers$customer_state)
+
+# Creating a data frame for better visualization
+# Daha iyi görselleştirme için bir veri çerçevesi oluşturuyoruz
+state_segments_df <- as.data.frame(state_segments)
+colnames(state_segments_df) <- c("State", "Number_of_Customers")
+
+# Displaying the top states by number of customers
+# Müşteri sayısına göre en çok müşteriye sahip eyaletleri görüntülüyoruz
+top_states <- head(state_segments_df[order(-state_segments_df$Number_of_Customers), ], 10)
+print(top_states)
+
+```
+
+
+```{r}
+# Grouping customers by payment type and counting the number of customers
+# Müşterileri ödeme türlerine göre gruplandırıp müşteri sayısını hesaplıyoruz
+payment_segments <- table(order_payments$payment_type)
+
+# Creating a data frame for better visualization
+# Daha iyi görselleştirme için bir veri çerçevesi oluşturuyoruz
+payment_segments_df <- as.data.frame(payment_segments)
+colnames(payment_segments_df) <- c("Payment_Type", "Number_of_Customers")
+
+# Displaying the payment method distribution
+# Ödeme yöntemi dağılımını görüntülüyoruz
+print(payment_segments_df)
+
+```
+
+
+#### A) Müşteri Verileri - Customer Data
+
+**- Müşteri Şehirleri ve Eyaletleri:Customer Cities and States:**
+
+- customer_city ve customer_state sütunları, müşterilerin yaşadığı şehir ve eyalet bilgilerini içeriyor.
+The customer_city and customer_state columns contain information about the cities and states where the customers reside.
+- Örneğin, São Paulo (SP) eyaletindeki en fazla müşteri sayısına sahip şehir, toplamda 15,540 müşteri ile São Paulo.
+For example, the city with the highest number of customers in the state of São Paulo (SP) is São Paulo, with a total of 15,540 customers.
+
+#### B) Müşteri Segmentasyonu Sonuçları - Customer Segmentation Results
+
+1. Şehirlere Göre Müşteri Sayısı - Number of Customers by City:
+
+**Top Müşteri Şehirleri:Top Customer Cities:**
+- São Paulo, Rio de Janeiro, Belo Horizonte gibi şehirler, büyük müşteri kitlelerine sahip.
+Cities like São Paulo, Rio de Janeiro, and Belo Horizonte have large customer bases.
+
+- Bu şehirlerdeki yoğun müşteri sayısı, yerel pazarlama stratejilerinin geliştirilmesine yardımcı olabilir.
+The significant customer numbers in these cities can aid in developing local marketing strategies.
+
+2. Eyaletlere Göre Müşteri Sayısı - Number of Customers by State:
+
+**Müşteri Sayısının Dağılımı:Distribution of Customer Numbers:**
+
+- São Paulo (SP) eyaletinde 41,746 müşteri bulunuyor.
+The state of São Paulo (SP) has 41,746 customers.
+- Diğer eyaletler, örneğin Rio de Janeiro (RJ) 12,852 müşteri ile geliyor.
+Other states, such as Rio de Janeiro (RJ), have 12,852 customers.
+
+Bu bilgiler, hangi eyaletlerde daha fazla pazarlama yapılması gerektiğini gösterir.
+This information indicates where more marketing efforts may be needed.
+
+#### C) Ödeme Yöntemlerine Göre Müşteri Dağılımı - Customer Distribution by Payment Method
+
+**Ödeme Yöntemleri:Payment Methods:**
+
+- Boleto: 19,784 müşteri
+Boleto: 19,784 customers
+- Kredi Kartı: 76,795 müşteri
+Credit Card: 76,795 customers
+- Debit Kart: 1,529 müşteri
+Debit Card: 1,529 customers
+- Tanımsız: 3 müşteri
+Not Defined: 3 customers
+- Vouchere: 5,775 müşteri
+Voucher: 5,775 customers
+
+- Kredi kartı, en fazla müşteri sayısına sahip ödeme yöntemi olarak öne çıkıyor.
+The credit card stands out as the payment method with the highest number of customers.
+- Bu, kredi kartı ödemelerini teşvik eden stratejilerin ne kadar etkili olabileceğini gösteriyor.
+This indicates how effective strategies encouraging credit card payments could be.
+
+#### Öneriler - Recommendations
+
+**Pazarlama Stratejileri:Marketing Strategies:**
+
+- En çok müşteri sayısına sahip şehirler ve eyaletler üzerinde hedeflenmiş kampanyalar düzenlemek.
+Implement targeted campaigns in cities and states with the highest customer numbers.
+
+**Ödeme Yöntemlerinin Teşviki:Encouraging Payment Methods:**
+
+- Kredi kartı kullanımını artırmak için özel indirimler veya taksit seçenekleri sunmak.
+Offer special discounts or installment options to increase credit card usage.
+
+**Demografik Analiz:Demographic Analysis:**
+
+- Müşterilerin demografik özelliklerine (yaş, cinsiyet) göre daha fazla segment oluşturmak, daha hedefli pazarlama stratejileri geliştirmek için faydalı olacaktır.
+Creating more segments based on customer demographics (age, gender) will be beneficial for developing more targeted marketing strategies.
+
+### Daha derin analizlere girebiliriz - We can do much deeper analysis
+
+#### A) Ürün Kategorilerine Göre Satışların İncelenmesi - Analyzing Sales by Product Category
+
+1. Veri Setini İnceleyelim - Let's Explore the Dataset
+
+```{r}
+# Display the first few rows of the product dataset
+# Ürün veri setinin ilk birkaç satırını görüntülüyoruz
+head(products)
+
+```
+
+2. Ürün Kategorileri ve Satış Değerlerini Gruplama - Grouping Product Categories and Sales Values
+
+```{r}
+# Merge the order_items and order_payments datasets by 'order_id'
+# 'order_id' üzerinden order_items ve order_payments veri setlerini birleştiriyoruz
+merged_items_payments <- merge(order_items, order_payments, by="order_id")
+
+# Merge the result with the products dataset by 'product_id'
+# Sonucu products veri seti ile 'product_id' üzerinden birleştiriyoruz
+merged_data <- merge(merged_items_payments, products, by="product_id")
+
+# Grouping by product category and summing up the payment values
+# Ürün kategorilerine göre gruplandırıp toplam ödeme değerlerini hesaplıyoruz
+category_sales <- aggregate(payment_value ~ product_category_name, data=merged_data, FUN=sum)
+
+# Sorting categories by total sales value
+# Kategorileri toplam satış değerine göre sıralıyoruz
+category_sales <- category_sales[order(-category_sales$payment_value), ]
+
+# Displaying the top categories by sales
+# Satışlara göre en çok satan kategorileri görüntülüyoruz
+head(category_sales, 10)
+
+```
+
+#### Çıktı Sonuçlarının Yorumu - Interpretation of the Results
+
+**En Çok Satış Yapan Kategoriler:Most Preferred Categories**
+
+* cama_mesa_banho (Yatak, masa ve banyo ürünleri) toplamda 1,712,553.7 BRL ödeme değeri ile en çok satış yapan kategori.
+* cama_mesa_banho (Bedding, table, and bath products) is the top-selling category with a total payment value of 1,712,553.7 BRL.
+* beleza_saude (Güzellik ve sağlık) kategorisi 1,657,373.1 BRL ile ikinci sırada.
+beleza_saude (Beauty and health) is the second top-selling category with a total of 1,657,373.1 BRL.
+* informatica_acessorios (Bilgisayar aksesuarları) 1,585,330.4 BRL ile üçüncü sırada.
+informatica_acessorios (Computer accessories) ranks third with 1,585,330.4 BRL.
+
+**Popüler Kategoriler:Popular Categories**
+
+* Bu liste, hangi ürün kategorilerinin müşteriler tarafından en çok tercih edildiğini gösterir.
+This list shows which product categories are most preferred by customers.
+
+* En çok satış yapan kategoriler, yatak/masa/banyo, güzellik/sağlık ve bilgisayar aksesuarları gibi çeşitli ürün gruplarına yayıldı.
+The top-selling categories span a variety of product groups such as bedding/table/bath, beauty/health, and computer accessories.
+
+
+#### Sonraki Adımlar - Next Steps
+
+**Görselleştirme - Visualization:**
+
+* Bu sonuçları daha iyi anlamak için bir çubuk grafiği oluşturabiliriz. Böylece en çok satış yapan ürün kategorilerini görsel olarak inceleyebiliriz.
+To better understand these results, we can create a bar plot to visualize the top-selling product categories.
+
+**Daha Fazla Segmentasyon - Further Segmentation:**
+
+* Ürün kategorilerini şehir veya eyalet gibi farklı segmentlerle birleştirerek hangi kategorilerin hangi bölgelerde daha popüler olduğunu inceleyebiliriz.
+We can combine product categories with different segments such as city or state to analyze which categories are more popular in certain regions.
+
+
+
+
+
+#### A) Görselleştirme - Visualization
+
+```{r}
+# Bar plot for the top product categories by sales
+# En çok satış yapan ürün kategorilerini gösteren çubuk grafiği
+library(ggplot2)
+
+# En çok satış yapan ilk 10 kategoriye göre çubuk grafiği oluşturuyoruz
+# Creating a bar plot for the top 10 selling categories
+ggplot(category_sales[1:10, ], aes(x=reorder(product_category_name, -payment_value), y=payment_value)) +
+
+  # Çubuk grafiği için 'geom_bar' fonksiyonunu kullanıyoruz
+  # Using 'geom_bar' function to create the bar plot
+  geom_bar(stat="identity", fill="steelblue") +
+
+  # Başlık ve etiketler ekliyoruz
+  # Adding title and labels
+  labs(title="Top 10 Product Categories by Sales", 
+       x="Product Category", 
+       y="Total Payment Value (BRL)") +
+
+  # X eksenindeki etiketleri 45 derece eğiyoruz
+  # Rotating the labels on the x-axis by 45 degrees for readability
+  theme(axis.text.x = element_text(angle=45, hjust=1))
+
+```
+
+
+#### A) Ürün Kategorileri ve Eyaletlere Göre Satışların Analizi - Analyzing Sales by Product Categories and States
+
+1. Veri Setlerini Birleştirme - Merging the Datasets
+
+```{r}
+# Check the column names of each dataset
+# Her veri setinin sütun adlarını kontrol edelim
+colnames(order_items)
+colnames(order_payments)
+colnames(products)
+colnames(customers)
+
+```
+
+```{r}
+# Check for duplicates in customer_id in customers dataset
+# customers veri setinde customer_id sütununda tekrar eden değerleri kontrol edelim
+sum(duplicated(customers$customer_id))
+
+# Check for duplicates in order_id in order_items dataset
+# order_items veri setinde order_id sütununda tekrar eden değerleri kontrol edelim
+sum(duplicated(order_items$order_id))
+
+# Check for duplicates in order_id in order_payments dataset
+# order_payments veri setinde order_id sütununda tekrar eden değerleri kontrol edelim
+sum(duplicated(order_payments$order_id))
+
+```
+
+**Çözüm - Solution:**
+
+1. order_items ve order_payments Sütunlarındaki Tekrar Eden Satırların Yönetilmesi - Managing Duplicates in order_items and order_payments Columns:
+
+* Bu tekrar eden değerler, aynı siparişe ait birden fazla öğe ve ödeme yöntemi olduğu için normaldir. Ancak, her siparişin yalnızca bir satış değeri olması gerektiğinden, tekrar eden satırları ortalama veya toplam değerler alarak gruplandırabiliriz.
+These duplicate values are normal because there are multiple items and payment methods for the same order. However, since each order should only have one sales value, we can group duplicate rows by averaging or totaling them.
+
+* order_items ve order_payments veri setlerindeki tekrar eden siparişleri gruplandırarak işlemi devam ettireceğiz.
+We will continue the process by grouping the recurring orders in the order_items and order_payments data sets.
+
+
+```{r}
+# Check the columns of merged_items_payments dataset
+# merged_items_payments veri setinin sütunlarını kontrol edelim
+colnames(merged_items_payments)
+
+```
+
+
+```{r}
+# Check the columns of merged_data
+# merged_data veri setinin sütunlarını kontrol edelim
+colnames(merged_data)
+
+# Check the columns of customers dataset
+# customers veri setinin sütunlarını kontrol edelim
+colnames(customers)
+
+```
+
+
+```{r}
+# Check for duplicates in customer_id in customers dataset
+# customers veri setinde customer_id sütununda tekrar eden değerleri kontrol edelim
+sum(duplicated(customers$customer_id))
+
+```
+
+```{r}
+# Check the column names of merged_data to ensure customer_id exists
+# merged_data veri setinin sütun adlarını kontrol ediyoruz
+colnames(merged_data)
+
+```
+
+
+```{r}
+# Check the columns of order_items to verify if customer_id is present
+# order_items veri setinin sütunlarını kontrol ediyoruz
+colnames(order_items)
+
+# Check the columns of order_payments to verify if customer_id is present
+# order_payments veri setinin sütunlarını kontrol ediyoruz
+colnames(order_payments)
+
+```
+
+```{r}
+# Check the columns of orders dataset
+# orders veri setinin sütunlarını kontrol ediyoruz
+colnames(orders)
+
+```
+
+```{r}
+# Merge order_items with orders to get customer_id
+# order_items ve orders veri setlerini birleştirerek customer_id değerini alıyoruz
+order_items_with_customers <- merge(order_items, orders, by="order_id")
+
+# Merge order_items_with_customers with order_payments using 'order_id'
+# order_items_with_customers veri setini order_payments ile 'order_id' kullanarak birleştiriyoruz
+merged_items_payments <- merge(order_items_with_customers, order_payments, by="order_id")
+
+# Merge the result with the products dataset using 'product_id'
+# Sonucu products veri seti ile 'product_id' kullanarak birleştiriyoruz
+final_merged_data <- merge(merged_items_payments, products, by="product_id")
+
+# Check the first few rows of the final merged dataset
+# Birleştirilen son veri setinin ilk birkaç satırını kontrol ediyoruz
+head(final_merged_data)
+
+```
+
+
+```{r}
+# Check the columns of final_merged_data
+# final_merged_data veri setinin sütunlarını kontrol edelim
+colnames(final_merged_data)
+
+```
+
+```{r}
+# Merge order_items with orders to get customer_id and customer_state
+# order_items ile orders veri setini birleştirerek customer_id ve customer_state alıyoruz
+order_items_with_customers <- merge(order_items, orders, by="order_id")
+
+# Merge order_items_with_customers with order_payments using 'order_id'
+# order_items_with_customers veri setini order_payments ile 'order_id' kullanarak birleştiriyoruz
+merged_items_payments <- merge(order_items_with_customers, order_payments, by="order_id")
+
+# Merge the result with the products dataset using 'product_id'
+# Sonucu products veri seti ile 'product_id' kullanarak birleştiriyoruz
+final_merged_data <- merge(merged_items_payments, products, by="product_id")
+
+# Check the columns of final_merged_data to ensure customer_state exists
+# final_merged_data veri setinin sütun adlarını kontrol ediyoruz
+colnames(final_merged_data)
+
+# If customer_state exists, proceed to analyze sales by state and product category
+# customer_state varsa, eyalet ve ürün kategorisine göre satış analizi yapmaya devam ediyoruz
+
+```
+
+
+```{r}
+# Merge orders with customers to obtain customer_state
+# orders veri setini customers ile birleştirerek customer_state değerini alıyoruz
+orders_with_customers <- merge(orders, customers, by="customer_id")
+
+# Merge order_items with the merged orders_customers dataset using 'order_id'
+# order_items veri setini birleştirilen orders_with_customers veri seti ile 'order_id' kullanarak birleştiriyoruz
+order_items_with_customers <- merge(order_items, orders_with_customers, by="order_id")
+
+# Merge with order_payments using 'order_id'
+# order_items_with_customers veri setini order_payments ile 'order_id' kullanarak birleştiriyoruz
+merged_items_payments <- merge(order_items_with_customers, order_payments, by="order_id")
+
+# Merge the result with the products dataset using 'product_id'
+# Sonucu products veri seti ile 'product_id' kullanarak birleştiriyoruz
+final_merged_data <- merge(merged_items_payments, products, by="product_id")
+
+# Check the columns of final_merged_data to ensure customer_state exists
+# final_merged_data veri setinin sütun adlarını kontrol ediyoruz
+colnames(final_merged_data)
+
+# If customer_state exists, check the first few rows
+# Eğer customer_state varsa, ilk birkaç satırı kontrol ediyoruz
+if ("customer_state" %in% colnames(final_merged_data)) {
+    head(final_merged_data)
+} else {
+    print("customer_state column not found in final_merged_data!")
+}
+
+```
+
+
+```{r}
+colnames(final_merged_data)
+```
+
+
+Datasetimizde birleşetirme işlemlerimizi tamamladık. We have completed the merging operations in our dataset.
+
+### Müşteri Eyaletlerine Göre Satış Analizi - Customer State Sales Analysis
+
+#### A) Eyalet ve Ürün Kategorisine Göre Satışların Gruplandırılması - Grouping Sales by State and Product Category
+
+```{r}
+# Grouping by product category and customer state, and summing up the payment values
+# Ürün kategorilerine ve müşteri eyaletlerine göre gruplandırıp toplam ödeme değerlerini hesaplıyoruz
+state_category_sales <- aggregate(payment_value ~ product_category_name + customer_state, data=final_merged_data, FUN=sum)
+
+# Sort the results by payment_value
+# Sonuçları payment_value'ya göre sıralıyoruz
+state_category_sales <- state_category_sales[order(-state_category_sales$payment_value), ]
+
+# Display the top results
+# En çok satış yapan eyalet ve kategorileri görüntülüyoruz
+head(state_category_sales, 10)
+
+```
+
+
+```{r}
+# Check the distribution of states in final_merged_data
+# final_merged_data veri setinde eyaletlerin dağılımını kontrol edelim
+table(final_merged_data$customer_state)
+
+```
+
+
+```{r}
+# Get the top 3 product categories based on total sales
+# Toplam satışlara göre en çok satan 3 ürün kategorisini alıyoruz
+top_product_categories <- head(state_category_sales[order(-state_category_sales$payment_value), ], 3)
+
+# Display the top product categories
+# En çok satan ürün kategorilerini görüntüleyelim
+print(top_product_categories)
+
+```
+
+
+```{r}
+# Initialize an empty data frame to store results
+# Sonuçları saklamak için boş bir veri çerçevesi oluşturalım
+top_states_data <- data.frame()
+
+# Loop through each top product category
+# Her bir en çok satan ürün kategorisi için döngü
+for (category in top_product_categories$product_category_name) {
+    # Filter data for the current product category
+    # Mevcut ürün kategorisi için verileri filtreleyelim
+    category_data <- state_category_sales[state_category_sales$product_category_name == category, ]
+    
+    # Get the top 3 states for this category
+    # Bu kategori için en fazla satış yapan 3 eyaleti alalım
+    top_states <- head(category_data[order(-category_data$payment_value), ], 3)
+    
+    # Add the product category to the top states data
+    # Ürün kategorisini en fazla satış yapan eyalet verisine ekleyelim
+    top_states$product_category_name <- category
+    
+    # Append to the results data frame
+    # Sonuç veri çerçevesine ekleyelim
+    top_states_data <- rbind(top_states_data, top_states)
+}
+
+# Display the top states data
+# En fazla satış yapan eyalet verisini görüntüleyelim
+print(top_states_data)
+
+```
+
+```{r}
+library(ggplot2)  # ggplot2 kütüphanesini yükle (Load the ggplot2 library)
+library(scales)   # label_number fonksiyonunu kullanmak için scales kütüphanesini yükle (Load the scales library to use the label_number function)
+
+# En çok satan ürün kategorileri ve bunların en fazla satıldığı eyaletler için bar grafiği
+# Bar plot for top product categories and their top selling states
+ggplot(top_states_data, aes(x=reorder(customer_state, -payment_value), y=payment_value, fill=product_category_name)) +
+  geom_bar(stat="identity", position="dodge") +  # Bar grafiği için verileri ekle (Add data to create a bar graph)
+  labs(title="Top Product Categories and Their Top Selling States",  # Başlık ve eksen etiketlerini ayarla (Set the title and axis labels)
+       x="State", 
+       y="Total Sales Value") +  
+  theme_minimal() +  # Minimal tema uygula (Apply a minimal theme)
+  theme(axis.text.x = element_text(angle=45, hjust=1)) +  # X eksenindeki etiketleri döndür (Rotate the x-axis labels)
+  scale_y_continuous(labels = label_number(scale = 1e-3, suffix = "K")) +  # Y eksenindeki etiketleri formatla (Format the y-axis labels to show in thousands (K))
+  scale_fill_brewer(palette="Set1")  # Renk paletini değiştir (Change the color palette)
+
+```
+
+## **Buraya Kadar Neler yaptık - Let's see what we have done so far?**
+
+### 1. **Veri Temizleme ve Eksik Değerlerle İlgili İşlemler - Data Cleaning and Missing Value Handling**
+   - **Eksik verilerin doldurulması ve çıkarılması - Filling and removing missing values**:
+     - `orders` ve `products` veri setlerindeki eksik değerler dolduruldu veya çıkarıldı. (Missing values in `orders` and `products` datasets were filled or removed.)
+     - Özellikle **`order_approved_at`**, **`order_delivered_carrier_date`**, **`product_weight_g`**, **`product_category_name`** gibi sütunlardaki eksik değerlerle ilgili işlemler yapıldı. (We handled missing values in columns like `order_approved_at`, `order_delivered_carrier_date`, `product_weight_g`, and `product_category_name`.)
+
+### 2. **Keşifsel Veri Analizi (Exploratory Data Analysis - EDA)**
+   - **Veri setlerinin genel istatistiksel incelemesi - General statistical exploration of datasets**:
+     - Sipariş ve ödeme verileri incelendi. (Order and payment data were analyzed.)
+   - **Veri seti yapısının kontrolü - Checking the dataset structure**:
+     - Her veri setinin yapısı ve sütun isimleri incelendi. (We examined the structure and column names of each dataset.)
+   - **Veri gruplama ve özet istatistikler - Data grouping and summary statistics**:
+     - Ödeme yöntemlerinin dağılımı ve ürün kategorilerinin satış performansı analiz edildi. (We analyzed the distribution of payment methods and the sales performance of product categories.)
+
+### 3. **A/B Testi (Welch T-Test) - A/B Testing (Welch T-Test)**
+   - **Farklı ödeme yöntemlerinin karşılaştırılması - Comparing different payment methods**:
+     - **`payment_type_1`** ve **`payment_type_2`** arasında Welch Two Sample T-Test uygulandı. (Welch Two Sample T-Test was applied between `payment_type_1` and `payment_type_2`.)
+     - Sonuçlar istatistiksel anlamlılık ile incelendi (p-value). (The results were examined for statistical significance (p-value).)
+
+### 4. **Zaman Serisi Analizi (Time Series Analysis)**
+   - **Siparişlerin zaman içindeki dağılımı - Analyzing order trends over time**:
+     - Aylara göre siparişlerin değişimi analiz edildi ve grafikle görselleştirildi. (The monthly change in orders was analyzed and visualized with a graph.)
+   - **Hafta içi ve hafta sonu siparişlerinin karşılaştırılması - Comparing weekday and weekend orders**:
+     - Hafta içi ve hafta sonu yapılan alışveriş tutarlarının trendleri karşılaştırıldı ve haftalık sipariş dağılımı incelendi. (We compared shopping trends between weekdays and weekends, and analyzed weekly order distribution.)
+
+### 5. **Segmentasyon Analizi (Segmentation Analysis)**
+   - **Müşteri eyaletlerine göre satış analizi - Customer state sales analysis**:
+     - **`customer_state`** ve **`product_category_name`** değişkenlerine göre satışlar analiz edildi. (Sales were analyzed by `customer_state` and `product_category_name`.)
+     - En fazla satış yapılan eyaletler ve ürün kategorileri belirlendi ve ısı haritası ile görselleştirildi. (The top-selling states and product categories were identified and visualized with a heatmap.)
+   - **En çok satan ürün kategorileri ve eyalet bazlı analiz - Top-selling product categories and state-based analysis**:
+     - En çok satılan ilk 3 ürün kategorisinin, en fazla satış yapıldığı 3 eyaletle ilişkisi incelendi ve bar grafiği ile gösterildi. (The top 3 product categories and their top 3 selling states were analyzed and displayed in a bar chart.)
+
+### 6. **Veri Görselleştirme (Data Visualization)**
+   - **Isı haritaları - Heatmaps**: Ürün kategorileri ve eyaletler bazında satış verileri görselleştirildi. (Sales data by product categories and states were visualized using heatmaps.)
+   - **Bar grafikleri - Bar graphs**: Satış değerlerinin eyaletler ve ürün kategorilerine göre dağılımı bar grafikleri ile gösterildi. (Sales values by state and product category were displayed using bar graphs.)
+   - **Y ekseni düzenlemeleri - Y-axis formatting**: Grafikteki eksen etiketleri binlik katlar (K) şeklinde formatlandı. (Y-axis labels were formatted in thousands (K).)
+
+-----------------------------------------------------------------
+
+## **Şimdi Zaman Serisi Tahmini Yapalım (Time Series Forecasting)**
+  - **Amaç:** Gelecekteki satışları tahmin etmek.(Purpose: To predict future sales.)
+
+  - **Yöntem:**(Method:)
+Zaman serisi analiziyle (örneğin ARIMA, Exponential Smoothing) geçmiş sipariş verilerini kullanarak gelecekteki sipariş hacmini tahmin edebilirsiniz.(With time series analysis (e.g. ARIMA, Exponential Smoothing) you can forecast future order volume using historical order data.)
+
+Aylık veya haftalık bazda sipariş trendlerine bakarak kısa ve uzun vadeli tahminler yapılabilir.
+(Short and long-term forecasts can be made by looking at order trends on a monthly or weekly basis.)
+
+  - **Sonuçlar:**(Results:)
+
+Talep tahmini ve stok yönetimi gibi konularda daha iyi kararlar verilebilir.
+(Better decisions can be made on issues such as demand forecasting and inventory management.)
+
+
+```{r}
+# Veriyi hazırlama ve zaman serisine uygun hale getirme (Prepare data for time series analysis)
+# Sipariş tarihlerinin ay bazında gruplanması (Group orders by month)
+
+library(dplyr)
+
+# Tarihi 'Date' formatına çevir (Convert the date to 'Date' format)
+final_merged_data$order_purchase_timestamp <- as.Date(final_merged_data$order_purchase_timestamp)
+
+# Aylık sipariş sayısını hesapla (Calculate the number of orders per month)
+monthly_orders <- final_merged_data %>%
+  mutate(month = format(order_purchase_timestamp, "%Y-%m")) %>%  # Ay bilgisi ekle (Add month info)
+  group_by(month) %>%
+  summarise(total_orders = n())  # Toplam sipariş sayısını hesapla (Calculate total number of orders)
+
+# Aylık siparişleri görüntüle (View monthly orders)
+print(monthly_orders)
+
+```
+
+
+```{r}
+# Zaman serisi oluşturma (Create time series data)
+monthly_orders_ts <- ts(monthly_orders$total_orders, start = c(2016, 1), frequency = 12)  # Aylık frekanslı zaman serisi (Monthly frequency time series)
+
+# Zaman serisini görselleştirme (Visualize time series)
+plot(monthly_orders_ts, main="Monthly Orders Time Series", ylab="Total Orders", xlab="Year")
+
+```
+
+###**ARIMA Modeli ile Tahmin Yapma (Forecasting with Arima Model)
+
+```{r}
+library(forecast)  # Forecasting için gerekli kütüphane (Load library for forecasting)
+
+# ARIMA modelini oluştur (Fit ARIMA model)
+arima_model <- auto.arima(monthly_orders_ts)
+
+# Tahmin yap (Make a forecast)
+forecasted_orders <- forecast(arima_model, h=12)  # Önümüzdeki 12 ay için tahmin (Forecast for the next 12 months)
+
+# Tahmini görselleştir (Visualize the forecast)
+plot(forecasted_orders, main="ARIMA Forecast of Monthly Orders")
+
+```
+
+
+```{r}
+# Modelin hata oranlarını görüntüle (View model's error metrics)
+accuracy(arima_model)
+
+```
+
+### ARIMA Model Performans Metriği - ARIMA Model Performance Metrics
+
+Modelin doğruluğunu değerlendirmek için aşağıdaki hata metrikleri kullanılır. Bu metrikler, modelin tahmin ettiği değerler ile gerçek değerler arasındaki farkları ölçer. İşte her bir metriğin anlamı: (The following error metrics are used to evaluate the accuracy of the model. These metrics measure the differences between the values predicted by the model and the actual values. Here is what each metric means:)
+
+1. **ME (Mean Error - Ortalama Hata)**:
+   -  Tahmin edilen değerlerle gerçek değerler arasındaki ortalama sapmadır. Eğer 0’a yakınsa, model genel olarak dengeli tahmin yapıyor demektir. 
+   -  The average difference between the predicted and actual values. If it's close to 0, the model is unbiased.
+
+2. **RMSE (Root Mean Squared Error - Kök Ortalama Kare Hatası)**:
+   -  Hataların karelerinin ortalamasının kareköküdür. Hata miktarını ifade eder; düşük bir değer daha iyi bir model performansına işaret eder.
+   -  The square root of the average of squared errors. A lower value indicates a better model performance.
+
+3. **MAE (Mean Absolute Error - Ortalama Mutlak Hata)**:
+   -  Gerçek değerlerle tahmin edilen değerler arasındaki mutlak farkların ortalamasıdır. Hata oranını verir; düşük olması istenir.
+   -  The average of absolute differences between actual and predicted values. Lower values indicate better performance.
+
+4. **MPE (Mean Percentage Error - Ortalama Yüzde Hatası)**:
+   -  Gerçek değerlerle tahmin edilen değerler arasındaki yüzde farkının ortalamasıdır. Negatif ya da pozitif olabilir, modelin sapma yönünü gösterir.
+   -  The average percentage difference between actual and predicted values. Can be positive or negative, indicating model bias direction.
+
+5. **MAPE (Mean Absolute Percentage Error - Ortalama Mutlak Yüzde Hatası)**:
+   -  Gerçek değerlerle tahmin edilen değerler arasındaki mutlak yüzde farkıdır. Daha düşük bir MAPE değeri daha iyi bir model performansı anlamına gelir.
+   -  The average of the absolute percentage differences between actual and predicted values. Lower MAPE indicates better accuracy.
+
+6. **MASE (Mean Absolute Scaled Error - Ortalama Mutlak Ölçekli Hata)**:
+   -  Hataları ölçeklendirir ve karşılaştırma yapmayı sağlar. 1’den küçük değerler modelin iyi olduğunu gösterir.
+   -  Scales errors to allow for comparison. Values less than 1 indicate that the model is performing well.
+
+7. **ACF1 (Autocorrelation at Lag 1 - Gecikme 1'de Otokorelasyon)**:
+   -  Tahmin hataları arasındaki otokorelasyon derecesini ölçer. 0'a yakın bir değer, model hatalarının rastgele olduğunu gösterir.
+   -  Measures the autocorrelation of forecast errors at lag 1. Values near 0 indicate that forecast errors are random.
+
+---
+
+### Nasıl Yorumlanmalı? - How to Interpret?
+
+- **ME** değeri 0’a yakınsa, model tahminlerinde sistematik bir hata yapmıyor demektir.
+  If the **ME** value is close to 0, the model does not make a systematic error in its predictions.
+- **RMSE** ve **MAE** değerleri ne kadar düşükse, model o kadar doğru tahminler yapıyor demektir.
+  The lower the **RMSE** and **MAE** values, the more accurate the predictions the model makes.
+- **MPE** ve **MAPE** değerleri, modelin tahmin ettiği değerlerin ne kadar isabetli olduğunu yüzdesel olarak gösterir.
+  **MPE** and **MAPE** values show how accurate the values predicted by the model are as a percentage.
+- **MASE** değeri 1’den küçükse, model geçmiş ortalamalardan daha iyi tahmin yapıyor demektir.
+  If the **MASE** value is less than 1, the model is making better predictions than historical averages.
+- **ACF1** değeri 0’a ne kadar yakınsa, modelin hata tahminlerinin rastgele olduğunu ve modelin öngörü hatalarının bağımsız olduğunu gösterir.
+  The closer the **ACF1** value is to 0, the more random the model's error estimates are and the model's prediction errors are independent.
+
+Bu metrikler, modelin tahminlerinin ne kadar güvenilir olduğunu ve hangi alanlarda iyileştirme yapılması gerektiğini anlamak için kullanılır.
+  These metrics are used to understand how reliable the model's predictions are and where improvements are needed.
+
+
+
+### ARIMA Model Performans Analizi - ARIMA Model Performance Analysis
+
+ARIMA modelimizin çıktısını adım adım analiz edelim ve performansı hakkında yorum yapalım:
+Let's analyze the output of our ARIMA model step by step and comment on its performance:
+
+### Çıktı - Output:
+
+| Metrik | Değer | Metric | Value |
+|--------|-------|--------|-------|
+| ME (Ortalama Hata) | -11.97415 | ME (Mean Error) | -11.97415 |
+| RMSE (Kök Ortalama Kare Hatası) | 892.5092 | RMSE (Root Mean Squared Error) | 892.5092 |
+| MAE (Ortalama Mutlak Hata) | 611.5641 | MAE (Mean Absolute Error) | 611.5641 |
+| MPE (Ortalama Yüzde Hatası) | -2566.831 | MPE (Mean Percentage Error) | -2566.831 |
+| MAPE (Ortalama Mutlak Yüzde Hatası) | 2582.648 | MAPE (Mean Absolute Percentage Error) | 2582.648 |
+| MASE (Ortalama Mutlak Ölçekli Hata) | 0.1208959 | MASE (Mean Absolute Scaled Error) | 0.1208959 |
+| ACF1 (Gecikme 1'de Otokorelasyon) | -0.01327669 | ACF1 (Autocorrelation at Lag 1) | -0.01327669 |
+
+---
+
+#### 1. **ME (Ortalama Hata - Mean Error)**:
+   -  Modelin tahminleri ile gerçek değerler arasında küçük bir negatif sapma var. Bu, modelin tahminlerinin ortalama olarak hafifçe düşük olduğunu gösterir. Ancak bu değer 0'a oldukça yakın, bu da modelin genellikle dengeli tahminler yaptığını gösterir.
+   -  There is a small negative bias in the model's predictions compared to the actual values. This shows that the model slightly underestimates on average. However, since this value is close to 0, the model is generally making balanced predictions.
+
+#### 2. **RMSE (Kök Ortalama Kare Hatası - Root Mean Squared Error)**:
+   -  RMSE, tahmin hatalarının boyutunu gösterir. Modelin ortalama hatası 892.5 birimdir. Yani modelin tahminleri, gerçek değerlerden ortalama olarak bu kadar sapma gösteriyor. 
+   -  RMSE shows the size of the prediction errors. The model’s average error is 892.5 units, meaning the model's predictions deviate by this much from actual values on average.
+
+#### 3. **MAE (Ortalama Mutlak Hata - Mean Absolute Error)**:
+   -  MAE, tahminlerin ortalama mutlak hatasını gösterir. Model, tahminlerinde ortalama olarak 611.5 birimlik sapma gösteriyor. RMSE ile karşılaştırıldığında, hata dağılımı küçük hatalarla sınırlı olabilir.
+   -  MAE shows the average of the absolute errors. The model’s predictions deviate by 611.5 units on average. Compared to RMSE, the error distribution might be concentrated in smaller errors.
+
+#### 4. **MPE (Ortalama Yüzde Hatası - Mean Percentage Error)**:
+   -  MPE’nin bu kadar yüksek negatif bir değer olması, modelin önemli derecede düşük tahminler yaptığını gösterir. Tahmin edilen sipariş sayıları, gerçek sipariş sayılarından ciddi ölçüde düşük.
+   -  The highly negative MPE indicates that the model is significantly underestimating the actual values. The predicted order counts are much lower than the actual order counts.
+
+#### 5. **MAPE (Ortalama Mutlak Yüzde Hatası - Mean Absolute Percentage Error)**:
+   -  MAPE değeri %2582 gibi oldukça yüksek bir değere sahip. Bu, modelin tahminlerinin gerçek değerlerden oldukça uzak olduğunu gösterir. Genellikle %10’un altındaki MAPE değeri iyi kabul edilir.
+   -  MAPE has a very high value of 2582%, showing that the model's predictions deviate substantially from actual values. Generally, MAPE below 10% is considered good.
+
+#### 6. **MASE (Ortalama Mutlak Ölçekli Hata - Mean Absolute Scaled Error)**:
+   -  MASE değeri 1'den çok daha küçük, bu da modelin genel olarak başarılı olduğunu gösteriyor. 1'den küçük bir MASE değeri, modelin sabit bir ortalamaya dayalı tahmine göre daha iyi performans gösterdiğini gösterir.
+   -  A MASE value much smaller than 1 shows that the model is performing well overall. A MASE value less than 1 indicates the model is outperforming a naive forecast based on the mean.
+
+#### 7. **ACF1 (Gecikme 1’de Otokorelasyon - Autocorrelation at Lag 1)**:
+   -  ACF1 değeri neredeyse sıfıra yakın, bu da modelin tahmin hatalarının rastgele olduğunu ve bir kalıba bağlı olmadığını gösterir.
+   -  The ACF1 value is near zero, indicating that the forecast errors are random and not following a specific pattern.
+
+---
+
+### Genel Yorum - General Interpretation:
+-  Modelin genellikle tahminlerinde düşük bir hata oranı var. MASE değeri 1’den küçük olduğu için modelin bazı tahminleri doğru olabilir. Ancak **RMSE**, **MAE** ve özellikle **MPE** ve **MAPE** değerlerinin yüksek olması, modelin bazı dönemlerde önemli hatalar yaptığını ve tahmin performansının iyileştirilmesi gerektiğini gösterir.
+   The model generally has low error rates. Since MASE is less than 1, some predictions might be accurate. However, the high **RMSE**, **MAE**, and especially **MPE** and **MAPE** indicate that the model is making significant errors in certain periods and needs performance improvements.
+
+### İyileştirme Önerileri - Improvement Suggestions:
+-  Modeli daha iyi ayarlamak için zaman serisi üzerinde ek özellik mühendisliği yapılabilir. Alternatif modeller (Exponential Smoothing, Prophet gibi) ile karşılaştırma yaparak daha iyi sonuçlar elde edilebilir.
+   To better tune the model, feature engineering on the time series can be done. Alternative models (such as Exponential Smoothing or Prophet) can be used for comparison to obtain better results.
+   
+   
+### İyileştirme Çalışması - Improvment
+- ARIMA modelinin performansını artırmak için alternatif bir model denemek en etkili stratejilerden biri olabilir. Exponential Smoothing, trend ve mevsimsellik içeren veri setlerinde güçlü tahminler yapabilme yeteneğine sahiptir. Trying an alternative model to improve the performance of the ARIMA model can be one of the most effective strategies. Exponential Smoothing has the ability to make strong predictions in data sets that contain trends and seasonality.
+- Bu yöntemle, hem modelin basitliğini koruyarak hem de trend ve mevsimsellik bileşenlerini yakalayarak daha iyi tahminler yapabiliriz. Şimdi adım adım Exponential Smoothing modeli oluşturalım ve tahmin yapalım. With this method, we can make better predictions by keeping the model simple and capturing the trend and seasonality components. Now let's create the Exponential Smoothing model step by step and make predictions.
+
+```{r}
+library(forecast)  # Holt-Winters modeli için forecast kütüphanesini yükle (Load forecast library for Holt-Winters model)
+
+# Holt-Winters Exponential Smoothing modelini oluştur (Fit Holt-Winters Exponential Smoothing model)
+hw_model <- hw(monthly_orders_ts, seasonal="multiplicative")  # Mevsimsellik çarpımsal olarak ayarlandı (Seasonality set as multiplicative)
+
+# Tahmin yap (Make a forecast)
+hw_forecast <- forecast(hw_model, h=12)  # Önümüzdeki 12 ay için tahmin (Forecast for the next 12 months)
+
+# Tahmini görselleştir (Visualize the forecast)
+plot(hw_forecast, main="Holt-Winters Exponential Smoothing Forecast")
+
+```
+
+
+
+```{r}
+# Modelin hata oranlarını görüntüle (View model's error metrics)
+accuracy(hw_model)
+
+```
+
+
+```{r}
+# ARIMA modelinin hata oranları (ARIMA model accuracy)
+arima_accuracy <- accuracy(arima_model)
+print("ARIMA Model Accuracy")
+print(arima_accuracy)
+
+# Holt-Winters modelinin hata oranları (Holt-Winters model accuracy)
+hw_accuracy <- accuracy(hw_model)
+print("Holt-Winters Model Accuracy")
+print(hw_accuracy)
+
+# Modelleri karşılaştırma (Compare the models)
+comparison <- data.frame(
+  Model = c("ARIMA", "Holt-Winters"),
+  RMSE = c(arima_accuracy[2], hw_accuracy[2]),
+  MAE = c(arima_accuracy[3], hw_accuracy[3]),
+  MASE = c(arima_accuracy[6], hw_accuracy[6])
+)
+
+print("Comparison of ARIMA and Holt-Winters Models")
+print(comparison)
+
+```
+
+
+### Performans Yorumlaması - Performance Interpretation:
+
+#### ARIMA Modeli:
+- **RMSE (Root Mean Squared Error)**: **892.5092**
+- **MAE (Mean Absolute Error)**: **611.5641**
+- **MASE (Mean Absolute Scaled Error)**: **0.1208959**
+
+#### Holt-Winters Modeli:
+- **RMSE (Root Mean Squared Error)**: **590.2868**
+- **MAE (Mean Absolute Error)**: **517.0832**
+- **MASE (Mean Absolute Scaled Error)**: **0.1022186**
+
+### Performans Yorumlaması:
+1. **RMSE (Kök Ortalama Kare Hatası)**: 
+   - **Holt-Winters** modelinin RMSE değeri (**590.2868**) **ARIMA** modelinden daha düşük (**892.5092**). Bu, Holt-Winters modelinin tahminlerinde daha az hata yaptığını gösterir.
+   - **Yorum**: **Holt-Winters** modeli, zaman serisindeki verileri daha iyi yakalıyor ve daha az sapma ile tahmin yapıyor.
+
+2. **MAE (Ortalama Mutlak Hata)**:
+   - **Holt-Winters** modelinin MAE değeri (**517.0832**), **ARIMA** modelinden daha düşük (**611.5641**). Bu, Holt-Winters modelinin ortalama hata oranının daha düşük olduğunu ve daha iyi bir tahmin gücüne sahip olduğunu gösterir.
+   - **Yorum**: **Holt-Winters** modeli, genel olarak tahmin ettiği değerlerin gerçek değerlere daha yakın olduğunu gösteriyor.
+
+3. **MASE (Ortalama Mutlak Ölçekli Hata)**:
+   - **Holt-Winters** modelinin MASE değeri (**0.1022186**), **ARIMA** modeline göre daha küçük (**0.1208959**). Bu da Holt-Winters modelinin hata oranının ölçeklendirilmiş veri üzerinde daha iyi olduğunu gösteriyor.
+   - **Yorum**: **MASE** değerlerinin her iki modelde de 1’den küçük olması, her iki modelin de makul performans gösterdiğini, ancak **Holt-Winters** modelinin daha üstün olduğunu gösterir.
+
+### Genel Yorum - General Interpretation:
+- Genel sonuçlara baktığımızda, **Holt-Winters modeli** bu veri seti için **ARIMA modelinden** daha iyi performans göstermiştir. Hem RMSE hem de MAE açısından daha düşük hata oranlarına sahip olduğu için, bu model daha güvenilir ve daha doğru tahminler yapıyor gibi görünüyor. MASE değerlerinin de her iki modelde 1’den küçük olması, her iki modelin de makul tahminler yaptığını, ancak Holt-Winters modelinin daha tutarlı olduğunu gösterir.
+
+- Based on the results, the **Holt-Winters model** outperforms the **ARIMA model** for this dataset. With lower RMSE and MAE values, the Holt-Winters model appears to provide more accurate and reliable forecasts. The MASE values being less than 1 for both models indicate that both are reasonable, but the Holt-Winters model shows more consistency and better overall performance.
+
+### Modelime Güvenebilir Miyim? - Can I Trust My Model?
+- **Evet, Holt-Winters modeline güvenebilirsiniz** çünkü hata oranları daha düşük ve modelin daha doğru tahminler yaptığı gözüküyor. Tahminlerinizi bu model üzerinden yaparak gelecekteki trendleri analiz edebilirsiniz.
+
+- **Yes, you can trust the Holt-Winters model** because it has lower error rates and appears to make more accurate predictions. You can use this model to forecast future trends with more confidence.
+
+### Bir Sonraki Adım:
+- Bu modelin tahminlerini kullanarak **iş kararları** verebilir ve stok yönetimi, talep tahmini gibi alanlarda daha sağlam planlar yapabilirsiniz. Ayrıca, bu modelle birlikte zaman serisi verisinde daha ayrıntılı analizler de yapabiliriz.
+
+- You can use the forecasts from this model to make **business decisions**, like inventory management and demand forecasting. We can also do more detailed analyses on the time series data with this model.
+
+### Devam Ediyoruz.. We continue..
+
+### Sepet Analizi Adımları - Market Basket Analysis Steps:
+
+1. **Veri Hazırlığı - Data Preparation**: 
+   - İlgili ürün ve sipariş verilerini temizleyip yapılandıracağız.
+   - We will clean and structure the relevant product and order data.
+
+2. **Birliktelik Kuralları (Association Rules)**: 
+   - Hangi ürünlerin birlikte satın alındığını belirlemek için Apriori algoritmasını uygulayacağız.
+   - We will apply the Apriori algorithm to identify which products are frequently purchased together.
+
+3. **Sonuçları Görselleştirme - Visualizing Results**: 
+   - En sık birlikte satın alınan ürün çiftlerini görselleştireceğiz.
+   - We will visualize the most frequently co-purchased product pairs.
+
+
+
+```{r}
+# Gerekli kütüphaneleri yükleyelim (Load required libraries)
+library(arules)         # Birliktelik kuralları için (For association rules)
+library(arulesViz)      # Birliktelik kuralları görselleştirme için (For visualizing association rules)
+
+# Sepet analizi için gerekli veriyi hazırlama (Prepare data for Market Basket Analysis)
+# order_items veri setini kullanarak her siparişteki ürünleri listeleyelim (Use the order_items dataset to list products per order)
+orders_products <- split(final_merged_data$product_category_name, final_merged_data$order_id)
+
+# Veriyi arules paketi için transactions formatına dönüştürelim (Convert data to transactions format for arules package)
+transactions <- as(orders_products, "transactions")
+
+# İlk 10 transaction'ı inceleyelim (Inspect the first 10 transactions)
+inspect(transactions[1:10])
+
+```
+
+
+
+
+```{r}
+# Transaction nesnesini kontrol etme (Check the transactions object)
+summary(transactions)
+
+```
+
+### Veriyi İnceleme ve Yorum - Data Examination and Interpretation:
+
+#### 1. Verinin Özeti - Data Summary (transactions as itemMatrix):
+   - **95143** satır (transactions) ve **73** ürün kategorisi (items) mevcut.
+   - Verinin yoğunluğu oldukça düşük (%1.38), bu da veri setindeki çoğu işlemin (transaction) yalnızca bir veya iki ürün içerdiğini gösteriyor.
+   - En sık satın alınan ürün kategorileri: **cama_mesa_banho** (9272 işlem), **beleza_saude** (8648 işlem), **esporte_lazer** (7530 işlem).
+
+   - **95143** rows (transactions) and **73** product categories (items) exist.
+   - The data density is quite low (1.38%), which indicates that most transactions only contain one or two products.
+   - Most frequently purchased product categories: **cama_mesa_banho** (9272 transactions), **beleza_saude** (8648 transactions), **esporte_lazer** (7530 transactions).
+
+#### 2. Element (itemset/transaction) Uzunluğu Dağılımı - Element Length Distribution:
+   - Çoğu işlem yalnızca 1 üründen oluşuyor (94419 adet). Sadece **709** işlem 2 üründen oluşurken, 3 ürün içeren sadece **15** işlem var.
+   - Most transactions contain only 1 item (94419 transactions). Only **709** transactions have 2 items, while just **15** transactions have 3 items.
+
+#### Yorum - Interpretation:
+   - **Birlikte satın alma** analizi yapabilmek için işlem başına daha fazla ürünün olduğu veri setlerinde daha iyi sonuçlar alınır. Ancak burada çoğu işlem tek ürün içeriyor. Bu nedenle, çok fazla birliktelik kuralı çıkmayabilir.
+   - To perform **market basket analysis**, it is generally better if transactions contain more products. However, since most transactions here have only one product, we may not get many association rules.
+   
+   - Yine de destek ve güven oranlarını azaltarak bazı kural elde etmeye çalışabiliriz.
+   - However, we can still try reducing the support and confidence thresholds to generate some rules.
+
+### Bir sonraki adım - Next Step:
+Veriyi bu haliyle işleyelim ve **Apriori algoritmasını** daha düşük destek (support) ve güven (confidence) değerleriyle çalıştırarak kural oluşturalım.
+
+Let's proceed with processing the data as it is and run the **Apriori algorithm** with lower support and confidence values to generate rules.
+
+
+### Gelen çıktıya göre; 
+
+-   Apriori algoritması herhangi bir kural üretmedi (0 rule(s)). Bu, destek (support) ve güven (confidence) parametrelerinin hala çok yüksek olabileceğini veya veri setindeki işlemlerin (transactions) çok az sayıda ürünü kapsadığı için yeterli birliktelik kuralı oluşturulmadığını gösteriyor. ( According to the output; the Apriori algorithm did not produce any rules (0 rule(s)). This indicates that the support and confidence parameters may still be too high or that not enough association rules were created because the transactions in the dataset cover too few products.)
+
+-   veri setindeki işlemlerin çok az ürünü kapsadığını göz önünde bulundurarak, daha fazla ürün içeren işlemler üzerinde çalışılması gerektiğini söyleyebiliriz. Bu veri setinde birlikte satın alınan ürünlerin sayısının az olması sebebiyle Apriori algoritmasından sınırlı sonuç alabiliriz.( Considering that the transactions in the dataset cover too few products, we can say that work should be done on transactions that include more products. Due to the small number of products purchased together in this dataset, we can get limited results from the Apriori algorithm.)
+
+-   Destek ve güven oranlarını daha da düşürelim ve ürün kombinasyonlarının minimum uzunluğunu 2 olarak ayarlayalım. Bu, en az 2 ürün içeren işlemler üzerinde kural üretmeyi deneyecek.( Let's lower the support and confidence rates even further and set the minimum length of product combinations to 2. This will try to generate rules on transactions that contain at least 2 products.)
+
+
+
+```{r}
+# Apriori algoritmasını daha düşük parametrelerle çalıştırma (Run Apriori with even lower support and confidence)
+rules <- apriori(transactions, parameter = list(supp = 0.00001, conf = 0.2, minlen = 2))
+
+# Oluşturulan kural sayısını kontrol et (Check how many rules are generated)
+length(rules)
+
+# İlk birkaç kuralı görüntüle (View the first few rules)
+inspect(rules[1:10])
+
+```
+
+
+### Örnek
+
+-   Yukarıdaki kurallardan örneğin **fashion****_****roupa_infanto_juvenil** => **fashion_bolsas_e_acessorios**. **support: 0.00002102, confidence: 0.2857, lift: 14.92** kuralını elealalım: (For example, let's take the rule **fashion****_****roupa_infanto_juvenil** => **fashion_bolsas_e_acessorios**. **support: 0.00002102, confidence: 0.2857, lift: 14.92** from the above rules:)
+
+  -   **Bu kural**, fashion_roupa_infanto_juvenil kategorisinde bir ürün satın alındığında, fashion_bolsas_e_acessorios kategorisinde bir ürün satın alınma olasılığının **%28.57** olduğunu ve bu iki ürünün birlikte satın alınma oranının bağımsız satın almaya göre **14.92** kat daha fazla olduğunu gösteriyor.(**This rule** shows that when a product in the fashion_roupa_infanto_juvenil category is purchased, the probability of purchasing a product in the fashion_bolsas_e_acessorios category is **28.57%**, and the odds of purchasing these two products together are **14.92** times higher than purchasing them separately.)
+
+
+```{r}
+# Birliktelik kurallarını görselleştirme (Visualize the association rules)
+plot(rules, method = "graph", control = list(type = "items"))
+
+```
+
+
+## SONUC (Conclusion)
+
+### Buraya Kadar Gerçekleştirdiğimiz Analizler ve Elde Etmeye Çalıştığımız İçgörüler - Analyses Conducted and Insights Sought So Far:
+
+1. **Veri Hazırlığı (Data Preparation)**:
+   - Verileri temizledik ve eksik değerleri tamamladık, böylece analiz için tutarlı bir veri setine sahip olduk.
+   - (We cleaned and imputed missing values to have a consistent dataset for analysis.)
+
+2. **Keşifsel Veri Analizi - EDA (Exploratory Data Analysis)**:
+   - Veri setinde yer alan temel özellikleri inceledik: siparişlerin zaman dağılımı, eyaletlere göre satış dağılımı, ödeme türlerinin sıklıkları gibi istatistiksel bilgilere ulaştık.
+   - (We explored the dataset’s basic features, such as time distribution of orders, sales by state, and frequency of payment types.)
+
+3. **A/B Testi (A/B Testing)**:
+   - Farklı müşteri gruplarının (casual ve member) ödeme davranışlarını karşılaştırarak, müşteri türlerine göre ödeme değerlerinin farklılık gösterip göstermediğini analiz ettik.
+   - (We analyzed whether payment values differed based on customer types by comparing the payment behaviors of different customer groups.)
+
+4. **Zaman Serisi Analizi (Time Series Analysis)**:
+   - Siparişlerin aylık trendini analiz ederek zaman içindeki satış hareketlerini gözlemledik. Bu analiz, satışların zamanla nasıl değiştiğini anlamamıza yardımcı oldu.
+   - (We analyzed monthly sales trends to observe sales movements over time. This helped us understand how sales fluctuate over time.)
+
+5. **Hafta İçi ve Hafta Sonu Analizi (Weekday vs. Weekend Analysis)**:
+   - Haftanın farklı günlerinde satış trendlerini analiz ederek hafta içi ve hafta sonu alışveriş davranışlarındaki farklılıkları inceledik.
+   - (We analyzed sales trends on different days of the week to observe differences in shopping behavior on weekdays vs. weekends.)
+
+6. **Müşteri Konumları Üzerinden Satış Analizi (Sales Analysis by Customer Location)**:
+   - Müşterilerin eyaletlere göre satış dağılımını analiz ettik, böylece satışların bölgesel yoğunluklarını belirleyerek stratejik bilgiler elde etmeyi amaçladık.
+   - (We analyzed sales distribution by customer states to identify regional sales concentrations and gain strategic insights.)
+
+
+
