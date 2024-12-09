@@ -31,8 +31,6 @@ def load_data(folder_path):
     return dataframes
 
 folder_path = "extracted_files"
-st.write("Verificando diretório:", folder_path)
-st.write("Arquivos encontrados:", os.listdir(folder_path))
 data = load_data(folder_path)
 
 # Carregando os datasets
