@@ -5,11 +5,18 @@ import os
 import json
 import requests
 
+#
+
+folder_paths = ["extracted_files", "/workspaces/ecommerce-dashboard/extracted_files"]
+
+# 
+
 # Configuração do título do app
 st.set_page_config(page_title="Dashboard de E-commerce", layout="wide")
-folder_path = "extracted_files"
+
 # Função para carregar os datasets
 @st.cache_data
+
 def load_data(folder_path):
     csv_files = {
         "customers": "olist_customers_dataset.csv",
