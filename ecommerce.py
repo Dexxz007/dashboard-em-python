@@ -7,7 +7,7 @@ import requests
 
 # Configuração do título do app
 st.set_page_config(page_title="Dashboard de E-commerce", layout="wide")
-
+folder_path = "extracted_files"
 # Função para carregar os datasets
 @st.cache_data
 def load_data(folder_path):
@@ -30,10 +30,9 @@ def load_data(folder_path):
         dataframes[key] = pd.read_csv(file_path)
     return dataframes
 
-
-# Diretório dos arquivos CSV
-folder_path = "/workspaces/ecommerce-dashboard/extracted_files"
-
+folder_path = "extracted_files"
+st.write("Verificando diretório:", folder_path)
+st.write("Arquivos encontrados:", os.listdir(folder_path))
 data = load_data(folder_path)
 
 # Carregando os datasets
