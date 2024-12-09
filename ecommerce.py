@@ -25,12 +25,14 @@ def load_data(folder_path):
     dataframes = {}
     for key, file in csv_files.items():
         file_path = os.path.join(folder_path, file)
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Arquivo não encontrado: {file_path}")
         dataframes[key] = pd.read_csv(file_path)
     return dataframes
 
 
 # Diretório dos arquivos CSV
-folder_path = "extracted_files"
+folder_path = "/workspaces/ecommerce-dashboard/extracted_files"
 
 data = load_data(folder_path)
 
