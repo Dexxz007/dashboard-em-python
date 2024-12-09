@@ -30,7 +30,7 @@ def load_data(folder_path):
 
 
 # Diretório dos arquivos CSV
-folder_path = r"/workspaces/ecommerce-dashboard/extracted_files"
+folder_path = "extracted_files"
 
 data = load_data(folder_path)
 
