@@ -30,7 +30,6 @@ def load_data(folder_path):
         dataframes[key] = pd.read_csv(file_path)
     return dataframes
 
-folder_path = "extracted_files"
 data = load_data(folder_path)
 
 # Carregando os datasets
