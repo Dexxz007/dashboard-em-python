@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
+import json
+import requests
 
 # Configuração do título do app
 st.set_page_config(page_title="Dashboard de E-commerce", layout="wide")
@@ -26,8 +28,9 @@ def load_data(folder_path):
         dataframes[key] = pd.read_csv(file_path)
     return dataframes
 
+
 # Diretório dos arquivos CSV
-folder_path = r"C:\Users\Admin\Downloads\ecommerce\extracted_files"
+folder_path = r"/workspaces/ecommerce-dashboard/extracted_files"
 
 data = load_data(folder_path)
 
@@ -41,6 +44,22 @@ order_reviews = data["order_reviews"]
 products = data["products"]
 sellers = data["sellers"]
 categories = data["categories"]
+
+orders['order_delivered_customer_date'] = pd.to_datetime(orders['order_delivered_customer_date'])
+
+
+merged_geo_customers = customers.merge(
+    geolocation, 
+    left_on="customer_zip_code_prefix", 
+    right_on="geolocation_zip_code_prefix",
+    how="left"  # use left join para manter todos os clientes
+) 
+
+geoloc_orders = orders.merge(
+    merged_geo_customers, 
+    on="customer_id", 
+    how="left"
+)
 
 order_payments = order_payments[order_payments["payment_type"] != "not_defined"]
 
@@ -113,12 +132,13 @@ fig1 = px.bar(
 )
 st.plotly_chart(fig1, use_container_width=True)
 
-# Gráfico 2: Distribuição de Pagamentos
-st.subheader("Métodos de Pagamento")
-payment_type_count = order_payments["payment_type"].value_counts().reset_index()
-payment_type_count.columns = ["Tipo de Pagamento", "Quantidade"]
-fig2 = px.pie(payment_type_count, values="Quantidade", names="Tipo de Pagamento", title="Distribuição de Tipos de Pagamento")
-st.plotly_chart(fig2, use_container_width=True)
+# Gráfico 2: Avaliações dos Pedidos
+st.subheader("Distribuição de Avaliações")
+review_score_count = order_reviews["review_score"].value_counts().reset_index()
+review_score_count.columns = ["Nota", "Quantidade"]
+fig4 = px.bar(review_score_count, x="Nota", y="Quantidade", title="Distribuição de Avaliações dos Pedidos", text="Quantidade")
+st.plotly_chart(fig4, use_container_width=True)
+
 
 # Gráfico 3: Produtos mais Vendidos por Categoria
 st.subheader("Vendas x Categoria")
@@ -135,19 +155,44 @@ fig3 = px.bar(
 )
 st.plotly_chart(fig3, use_container_width=True)
 
-# Gráfico 4: Avaliações dos Pedidos
-st.subheader("Distribuição de Avaliações")
-review_score_count = order_reviews["review_score"].value_counts().reset_index()
-review_score_count.columns = ["Nota", "Quantidade"]
-fig4 = px.bar(review_score_count, x="Nota", y="Quantidade", title="Distribuição de Avaliações dos Pedidos", text="Quantidade")
-st.plotly_chart(fig4, use_container_width=True)
 
+# Gráfico 4 : Estados
 # Filtro: Análise por Estado
 st.subheader("Análise de Clientes por Estado")
 customer_state_count = customers["customer_state"].value_counts().reset_index()
 customer_state_count.columns = ["Estado", "Quantidade"]
 fig5 = px.bar(customer_state_count, x="Estado", y="Quantidade", title="Clientes por Estado", text="Quantidade")
 st.plotly_chart(fig5, use_container_width=True)
+
+# gráfico 5 - mapa
+
+geojson_url = "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson"
+geojson_data = requests.get(geojson_url).json()
+
+# Dados de exemplo: Agrupar pedidos por estado
+state_order_counts = geoloc_orders["customer_state"].value_counts().reset_index()
+state_order_counts.columns = ["Estado", "Quantidade"]
+
+# Criar o mapa usando o GeoJSON
+fig7 = px.choropleth(
+    state_order_counts,
+    geojson=geojson_data,  # GeoJSON com a geometria dos estados brasileiros
+    locations="Estado",  # Coluna com as siglas dos estados
+    featureidkey="properties.sigla",  # Chave do GeoJSON que corresponde às siglas
+    color="Quantidade",  # Coluna usada para colorir o mapa
+    title="Pedidos por Estado (Brasil)",
+    color_continuous_scale="Viridis",  # Escala de cores
+)
+
+# Ajustar o foco do mapa para o Brasil
+fig7.update_geos(
+    fitbounds="locations",  # Ajusta o zoom para os estados exibidos
+    visible=False  # Oculta os limites padrão do globo
+)
+
+# Exibir o mapa
+st.plotly_chart(fig7, use_container_width=True)
+# gráfico 5 - mapa (limite)
 
 # Gráfico 6: Receita por Tipo de Pagamento (R$ Ordenado maior para o menor)
 st.subheader("Receita por Tipo de Pagamento")
@@ -166,14 +211,18 @@ fig6 = px.bar(
 )
 st.plotly_chart(fig6, use_container_width=True)
 
+# Gráfico 7: Distribuição de Pagamentos
+st.subheader("Métodos de Pagamento")
+payment_type_count = order_payments["payment_type"].value_counts().reset_index()
+payment_type_count.columns = ["Tipo de Pagamento", "Quantidade"]
+fig2 = px.pie(payment_type_count, values="Quantidade", names="Tipo de Pagamento", title="Distribuição de Tipos de Pagamento")
+st.plotly_chart(fig2, use_container_width=True)
+
+
+
 # Rodapé
 st.markdown("---")
 st.caption("Criado por Matheus Aragão Cavalcante")
 
 
 #Comando pra abrir pelo terminal: python -m streamlit run ecommerce.py
-
-
-
-
-
